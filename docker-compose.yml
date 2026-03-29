@@ -1,0 +1,48 @@
+services:
+  parking-audit:
+    build: .
+    container_name: parking-audit
+    restart: unless-stopped
+    environment:
+      TZ: "America/Chicago"
+      PROPERTY_NAME: "Buccaneer Inn"
+      RETENTION_HOURS: "72"
+      CLEANUP_INTERVAL_HOURS: "12"
+      APP_HOST: "0.0.0.0"
+      APP_PORT: "8000"
+    volumes:
+      - ./data:/app/data
+    networks:
+      - app_net
+    expose:
+      - "8000"
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read(); print('ok')"
+        ]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: parking-audit-cloudflared
+    restart: unless-stopped
+    command: tunnel run
+    environment:
+      TUNNEL_TOKEN: "${CLOUDFLARED_TUNNEL_TOKEN}"
+      TZ: "America/Chicago"
+    depends_on:
+      parking-audit:
+        condition: service_healthy
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge

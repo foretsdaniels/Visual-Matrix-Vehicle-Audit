@@ -1,0 +1,97 @@
+{% extends "base.html" %}
+{% block title %}Dashboard &mdash; Parking Audit Builder{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Live Dashboard</h1>
+  {% if session %}
+  <p class="page-desc">
+    Session <code>{{ session.session_id[:8] }}</code> &mdash;
+    Scope: <strong>{{ scope_label }}</strong> &mdash;
+    <span id="lastUpdated" class="muted">Auto-refreshing&hellip;</span>
+  </p>
+  {% else %}
+  <p class="page-desc muted">No sessions found. <a href="/">Generate an audit first.</a></p>
+  {% endif %}
+</div>
+
+{% if session %}
+<div class="summary-tiles" id="summaryTiles">
+  <div class="tile" id="tile-total">
+    <div class="tile-value" id="val-total">{{ session.total_rooms }}</div>
+    <div class="tile-label">Total Rooms</div>
+  </div>
+  <div class="tile tile-good" id="tile-vehicles">
+    <div class="tile-value" id="val-vehicles">{{ session.rooms_with_vehicles }}</div>
+    <div class="tile-label">With Vehicle Info</div>
+  </div>
+  <div class="tile tile-warn" id="tile-notinsys">
+    <div class="tile-value" id="val-notinsys">{{ session.not_in_system }}</div>
+    <div class="tile-label">Not In VM System</div>
+  </div>
+  {% if session.has_departures %}
+  <div class="tile tile-alert" id="tile-dueouts">
+    <div class="tile-value" id="val-dueouts">{{ session.due_outs }}</div>
+    <div class="tile-label">Due Outs</div>
+  </div>
+  <div class="tile tile-info" id="tile-stayovers">
+    <div class="tile-value" id="val-stayovers">{{ session.stayovers }}</div>
+    <div class="tile-label">Stayovers</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="action-bar">
+  <a href="/download/{{ session.session_id }}/pdf" class="btn btn-primary btn-sm">📄 Export PDF</a>
+  <a href="/download/{{ session.session_id }}/zpl" class="btn btn-secondary btn-sm">🖨 Download ZPL</a>
+</div>
+
+<div class="dashboard-filters">
+  <div class="filter-group">
+    <input type="text" id="searchInput" class="filter-input" placeholder="Search room or plate&hellip;" />
+  </div>
+  <div class="filter-group filter-checks">
+    <label class="filter-check"><input type="checkbox" id="filterNotInSys" /> Only Not In VM System</label>
+    {% if session.has_departures %}
+    <label class="filter-check"><input type="checkbox" id="filterDueOut" /> Only Due Outs</label>
+    <label class="filter-check"><input type="checkbox" id="filterStayover" /> Only Stayovers</label>
+    {% endif %}
+  </div>
+  <button class="btn btn-ghost btn-sm" id="clearFilters">Clear Filters</button>
+</div>
+
+<div class="table-wrapper">
+  <table class="data-table" id="roomTable">
+    <thead>
+      <tr>
+        <th class="sortable" data-col="room_number">Room <span class="sort-icon">⇅</span></th>
+        {% if session.has_departures %}
+        <th class="sortable" data-col="vehicle_status">Status <span class="sort-icon">⇅</span></th>
+        {% endif %}
+        <th class="sortable" data-col="state">State <span class="sort-icon">⇅</span></th>
+        <th class="sortable" data-col="plate">Plate <span class="sort-icon">⇅</span></th>
+        <th>Make/Model</th>
+        <th>Year</th>
+        <th>Comment</th>
+        <th>Vehicle Data</th>
+      </tr>
+    </thead>
+    <tbody id="tableBody">
+      <tr><td colspan="8" class="table-loading">Loading&hellip;</td></tr>
+    </tbody>
+  </table>
+</div>
+<div id="rowCount" class="row-count"></div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+{% if session %}
+<script>
+  const SESSION_ID = "{{ session.session_id }}";
+  const HAS_DEPARTURES = {{ 'true' if session.has_departures else 'false' }};
+  initDashboard(SESSION_ID, HAS_DEPARTURES);
+</script>
+{% endif %}
+{% endblock %}

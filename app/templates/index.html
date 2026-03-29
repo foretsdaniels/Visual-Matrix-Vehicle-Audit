@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}Upload &mdash; Parking Audit Builder{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Generate Parking Audit</h1>
+  <p class="page-desc">Upload the Visual Matrix In-House Guests export to generate ZPL labels and a PDF report.</p>
+</div>
+
+<form method="post" action="/generate" enctype="multipart/form-data" class="upload-form" id="generateForm">
+  <div class="form-section">
+    <h2 class="section-title">1. In-House Guests File <span class="required">*</span></h2>
+    <p class="section-hint">Visual Matrix &ldquo;Parking Lot List&rdquo; export (.xlsx or .xls)</p>
+    <div class="file-drop-zone" id="inhouseDrop">
+      <input type="file" name="inhouse_file" id="inhouseFile" accept=".xlsx,.xls" required class="file-input" />
+      <label for="inhouseFile" class="file-label">
+        <span class="file-icon">📄</span>
+        <span class="file-text" id="inhouseLabel">Click to choose file or drag &amp; drop</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2 class="section-title">2. Departures File <span class="optional">(Optional)</span></h2>
+    <p class="section-hint">Upload to tag rooms as DUE OUT vs STAYOVER (.xlsx)</p>
+    <div class="file-drop-zone" id="departuresDrop">
+      <input type="file" name="departures_file" id="departuresFile" accept=".xlsx" class="file-input" />
+      <label for="departuresFile" class="file-label">
+        <span class="file-icon">📅</span>
+        <span class="file-text" id="departuresLabel">Click to choose departures file (optional)</span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2 class="section-title">3. Scope</h2>
+    <p class="section-hint">Select which rooms to include in this audit</p>
+    <div class="scope-options">
+      <label class="scope-option">
+        <input type="radio" name="scope" value="100_200" checked />
+        <span class="scope-card">
+          <strong>100/200s</strong>
+          <small>Rooms 100&ndash;299 + 501, 502</small>
+        </span>
+      </label>
+      <label class="scope-option">
+        <input type="radio" name="scope" value="300_400" />
+        <span class="scope-card">
+          <strong>300/400s</strong>
+          <small>Rooms 300&ndash;499 + 501, 502</small>
+        </span>
+      </label>
+      <label class="scope-option">
+        <input type="radio" name="scope" value="full" />
+        <span class="scope-card">
+          <strong>Full List</strong>
+          <small>All rooms in the file</small>
+        </span>
+      </label>
+    </div>
+  </div>
+
+  <div class="form-section">
+    <h2 class="section-title">4. Label Options</h2>
+    <label class="toggle-label">
+      <input type="checkbox" name="allow_multi_label" id="multiLabelToggle" value="on" checked />
+      <span class="toggle-switch"></span>
+      <span class="toggle-text">Allow multi-label split <span class="toggle-hint">(recommended — splits long lists across multiple 4&times;8 labels)</span></span>
+    </label>
+  </div>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary btn-large" id="submitBtn">
+      <span class="btn-icon">⚙️</span> Generate Audit
+    </button>
+  </div>
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>
+  setupFileInput('inhouseFile', 'inhouseLabel');
+  setupFileInput('departuresFile', 'departuresLabel');
+  setupFormSubmit('generateForm', 'submitBtn', 'Generating...');
+</script>
+{% endblock %}

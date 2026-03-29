@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Preview &mdash; {{ scope_label }} &mdash; Parking Audit Builder{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Audit Preview</h1>
+  <p class="page-desc">
+    Session <code>{{ session.session_id[:8] }}</code> &mdash; Scope: <strong>{{ scope_label }}</strong>
+  </p>
+</div>
+
+<div class="summary-tiles">
+  <div class="tile">
+    <div class="tile-value">{{ session.total_rooms }}</div>
+    <div class="tile-label">Total Rooms</div>
+  </div>
+  <div class="tile tile-good">
+    <div class="tile-value">{{ session.rooms_with_vehicles }}</div>
+    <div class="tile-label">With Vehicle Info</div>
+  </div>
+  <div class="tile tile-warn">
+    <div class="tile-value">{{ session.not_in_system }}</div>
+    <div class="tile-label">Not In VM System</div>
+  </div>
+  {% if session.has_departures %}
+  <div class="tile tile-alert">
+    <div class="tile-value">{{ session.due_outs }}</div>
+    <div class="tile-label">Due Outs</div>
+  </div>
+  <div class="tile tile-info">
+    <div class="tile-value">{{ session.stayovers }}</div>
+    <div class="tile-label">Stayovers</div>
+  </div>
+  {% endif %}
+</div>
+
+<div class="action-bar">
+  {% if has_pdf %}
+  <a href="/download/{{ session.session_id }}/pdf" class="btn btn-primary">
+    📄 Download PDF Report
+  </a>
+  {% endif %}
+  {% if has_zpl %}
+  <a href="/download/{{ session.session_id }}/zpl" class="btn btn-secondary">
+    🖨 Download ZPL Labels
+  </a>
+  {% endif %}
+  <a href="/dashboard?session_id={{ session.session_id }}" class="btn btn-outline">
+    📊 View Dashboard
+  </a>
+  <a href="/" class="btn btn-ghost">← New Audit</a>
+</div>
+
+<div class="preview-section">
+  <h2 class="section-title">Label Preview</h2>
+  <p class="section-hint">
+    Exact lines that will appear on the ZPL labels.
+    {% if not session.has_departures %}<em>No DUE OUT/STAYOVER — departures file not uploaded.</em>{% endif %}
+  </p>
+  <div class="label-preview">
+    <div class="label-frame">
+      <div class="label-header-preview">
+        <div class="lp-title">Parking Audit</div>
+        {% if property_name %}<div class="lp-line">{{ property_name }}</div>{% endif %}
+        <div class="lp-line">Scope: {{ scope_label }}</div>
+      </div>
+      <hr class="lp-sep" />
+      <div class="label-body-preview">
+        {% for indent, text in preview_lines %}
+        <div class="lp-line {% if indent %}lp-indent{% else %}lp-room{% endif %}">
+          {% if indent %}&nbsp;&nbsp;&nbsp;&nbsp;{% endif %}{{ text }}
+        </div>
+        {% endfor %}
+        {% if not preview_lines %}
+        <div class="lp-line lp-empty"><em>No entries for this scope.</em></div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

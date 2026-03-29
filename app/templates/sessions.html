@@ -1,0 +1,81 @@
+{% extends "base.html" %}
+{% block title %}Session History &mdash; Parking Audit Builder{% endblock %}
+
+{% block content %}
+<div class="page-header">
+  <h1>Session History</h1>
+  <p class="page-desc">Last 72 hours of audit sessions (most recent first).</p>
+</div>
+
+{% if not sessions %}
+<div class="empty-state">
+  <p>No sessions found. <a href="/">Generate your first audit.</a></p>
+</div>
+{% else %}
+<div class="sessions-list">
+  {% for s in sessions %}
+  <div class="session-card" id="session-{{ s.session_id }}">
+    <div class="session-card-header">
+      <div class="session-meta">
+        <span class="session-id">{{ s.session_id[:8] }}</span>
+        <span class="session-scope badge">{{ scope_label_fn(s.scope) }}</span>
+        {% if s.has_departures %}<span class="badge badge-departures">DUE OUT/STAYOVER</span>{% endif %}
+      </div>
+      <div class="session-time">{{ s.created_at[:19].replace('T', ' ') }} UTC</div>
+    </div>
+
+    <div class="session-counts">
+      <span class="count-chip">
+        <strong>{{ s.total_rooms }}</strong> rooms
+      </span>
+      <span class="count-chip count-good">
+        <strong>{{ s.rooms_with_vehicles }}</strong> with vehicle
+      </span>
+      <span class="count-chip count-warn">
+        <strong>{{ s.not_in_system }}</strong> not in system
+      </span>
+      {% if s.has_departures %}
+      <span class="count-chip count-alert">
+        <strong>{{ s.due_outs }}</strong> due out
+      </span>
+      <span class="count-chip count-info">
+        <strong>{{ s.stayovers }}</strong> stayovers
+      </span>
+      {% endif %}
+    </div>
+
+    {% if s.inhouse_filename %}
+    <div class="session-files">
+      In-House: <code>{{ s.inhouse_filename }}</code>
+      {% if s.departures_filename %} | Departures: <code>{{ s.departures_filename }}</code>{% endif %}
+    </div>
+    {% endif %}
+
+    <div class="session-actions">
+      <a href="/dashboard?session_id={{ s.session_id }}" class="btn btn-outline btn-sm">📊 Dashboard</a>
+      <a href="/preview/{{ s.session_id }}" class="btn btn-outline btn-sm">👁 Preview</a>
+      <a href="/download/{{ s.session_id }}/pdf" class="btn btn-primary btn-sm">📄 PDF</a>
+      <a href="/download/{{ s.session_id }}/zpl" class="btn btn-secondary btn-sm">🖨 ZPL</a>
+      <button class="btn btn-danger btn-sm" onclick="deleteSession('{{ s.session_id }}')">🗑 Delete</button>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+{% endblock %}
+
+{% block scripts %}
+<script src="/static/app.js"></script>
+<script>
+function deleteSession(sessionId) {
+  if (!confirm('Delete this session and all its artifacts?')) return;
+  fetch('/sessions/' + sessionId, { method: 'DELETE' })
+    .then(r => r.json())
+    .then(data => {
+      const card = document.getElementById('session-' + sessionId);
+      if (card) card.remove();
+    })
+    .catch(err => alert('Error deleting session: ' + err));
+}
+</script>
+{% endblock %}

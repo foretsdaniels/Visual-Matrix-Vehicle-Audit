@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}Parking Audit Builder{% endblock %}</title>
+  <link rel="stylesheet" href="/static/style.css" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+  <nav class="navbar">
+    <div class="nav-brand">
+      <span class="nav-icon">🅿</span>
+      <span class="nav-title">Parking Audit Builder</span>
+      {% if property_name %}<span class="nav-property"> — {{ property_name }}</span>{% endif %}
+    </div>
+    <ul class="nav-links">
+      <li><a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Upload</a></li>
+      <li><a href="/dashboard" class="{% if '/dashboard' in request.url.path %}active{% endif %}">Dashboard</a></li>
+      <li><a href="/sessions" class="{% if '/sessions' in request.url.path %}active{% endif %}">Sessions</a></li>
+    </ul>
+  </nav>
+
+  <main class="main-content">
+    {% if error %}
+    <div class="alert alert-error">{{ error }}</div>
+    {% endif %}
+    {% if warning %}
+    <div class="alert alert-warning">{{ warning }}</div>
+    {% endif %}
+    {% if success %}
+    <div class="alert alert-success">{{ success }}</div>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <span>Parking Audit Builder &mdash; Self-Hosted</span>
+    <a href="/health" target="_blank" class="health-link">Health</a>
+  </footer>
+
+  {% block scripts %}{% endblock %}
+</body>
+</html>

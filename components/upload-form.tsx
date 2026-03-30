@@ -4,6 +4,13 @@ import { useState, useRef, type ChangeEvent, type FormEvent } from "react"
 import { useRouter } from "next/navigation"
 import { FileSpreadsheet, Calendar, Loader2, Upload } from "lucide-react"
 import type { ScopeType } from "@/lib/types"
+import {
+  parseInhouseExcel,
+  parseDeparturesExcel,
+  buildRoomEntries,
+  computeCounts,
+  getScopeLabel,
+} from "@/lib/client-parser"
 
 const SCOPES: { value: ScopeType; label: string; description: string }[] = [
   { value: "100_200", label: "100/200s", description: "Rooms 100-299 + 501, 502" },
@@ -19,7 +26,7 @@ export function UploadForm() {
   const [allowMultiLabel, setAllowMultiLabel] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   const inhouseRef = useRef<HTMLInputElement>(null)
   const departuresRef = useRef<HTMLInputElement>(null)
 
@@ -42,17 +49,46 @@ export function UploadForm() {
     setError(null)
 
     try {
-      const formData = new FormData()
-      formData.append("inhouseFile", inhouseFile)
-      if (departuresFile) {
-        formData.append("departuresFile", departuresFile)
+      // Parse files on the client side
+      const inhouseBuffer = await inhouseFile.arrayBuffer()
+      let vehicleRecords
+      try {
+        vehicleRecords = parseInhouseExcel(inhouseBuffer)
+      } catch (parseError) {
+        throw new Error(
+          `Error parsing in-house file: ${parseError instanceof Error ? parseError.message : "Unknown error"}`
+        )
       }
-      formData.append("scope", scope)
-      formData.append("allowMultiLabel", allowMultiLabel ? "on" : "off")
 
+      // Parse departures if provided
+      let dueOutRooms: Set<number> | null = null
+      if (departuresFile && departuresFile.size > 0) {
+        const departuresBuffer = await departuresFile.arrayBuffer()
+        dueOutRooms = parseDeparturesExcel(departuresBuffer)
+      }
+
+      // Build entries
+      const entries = buildRoomEntries(vehicleRecords, scope, dueOutRooms)
+
+      if (entries.length === 0) {
+        throw new Error(
+          `No rooms found for scope '${getScopeLabel(scope)}'. Check your in-house file.`
+        )
+      }
+
+      const counts = computeCounts(entries)
+
+      // Send parsed data to API
       const response = await fetch("/api/generate", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          scope,
+          scopeLabel: getScopeLabel(scope),
+          entries,
+          hasDepartures: dueOutRooms !== null,
+          ...counts,
+        }),
       })
 
       const result = await response.json()
@@ -102,12 +138,16 @@ export function UploadForm() {
             className="sr-only"
           />
           <div className="flex flex-col items-center gap-3 text-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              inhouseFile ? "bg-primary" : "bg-muted"
-            }`}>
-              <FileSpreadsheet className={`w-6 h-6 ${
-                inhouseFile ? "text-primary-foreground" : "text-muted-foreground"
-              }`} />
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                inhouseFile ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <FileSpreadsheet
+                className={`w-6 h-6 ${
+                  inhouseFile ? "text-primary-foreground" : "text-muted-foreground"
+                }`}
+              />
             </div>
             <div>
               {inhouseFile ? (
@@ -147,12 +187,16 @@ export function UploadForm() {
             className="sr-only"
           />
           <div className="flex flex-col items-center gap-3 text-center">
-            <div className={`w-12 h-12 rounded-full flex items-center justify-center ${
-              departuresFile ? "bg-primary" : "bg-muted"
-            }`}>
-              <Calendar className={`w-6 h-6 ${
-                departuresFile ? "text-primary-foreground" : "text-muted-foreground"
-              }`} />
+            <div
+              className={`w-12 h-12 rounded-full flex items-center justify-center ${
+                departuresFile ? "bg-primary" : "bg-muted"
+              }`}
+            >
+              <Calendar
+                className={`w-6 h-6 ${
+                  departuresFile ? "text-primary-foreground" : "text-muted-foreground"
+                }`}
+              />
             </div>
             <div>
               {departuresFile ? (

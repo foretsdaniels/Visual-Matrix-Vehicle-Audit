@@ -42,8 +42,273 @@
 </div>
 
 <div class="action-bar">
-  <a href="/download/{{ session.session_id }}/pdf" class="btn btn-primary btn-sm">📄 Export PDF</a>
-  <a href="/download/{{ session.session_id }}/zpl" class="btn btn-secondary btn-sm">🖨 Download ZPL</a>
+  <a href="/download/{{ session.session_id }}/pdf" class="btn btn-primary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+      <polyline points="14 2 14 8 20 8"></polyline>
+    </svg>
+    Export PDF
+  </a>
+  <a href="/download/{{ session.session_id }}/zpl" class="btn btn-secondary btn-sm">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="6 9 6 2 18 2 18 9"></polyline>
+      <path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path>
+      <rect x="6" y="14" width="12" height="8"></rect>
+    </svg>
+    Download ZPL
+  </a>
+</div>
+
+<!-- Interactive Hotel Map -->
+<div class="map-section">
+  <div class="map-container">
+    <div class="map-header">
+      <div class="map-title">Buccaneer Inn Floor Plan</div>
+      <div class="map-legend">
+        <div class="legend-item"><span class="legend-swatch has-vehicle"></span> Vehicle Registered</div>
+        <div class="legend-item"><span class="legend-swatch not-in-system"></span> Not In VM System</div>
+        {% if session.has_departures %}
+        <div class="legend-item"><span class="legend-swatch due-out"></span> Due Out</div>
+        {% endif %}
+        <div class="legend-item"><span class="legend-swatch empty"></span> Not In Scope</div>
+        <div class="legend-item"><span class="legend-swatch amenity"></span> Amenity</div>
+      </div>
+    </div>
+    <div class="map-tabs">
+      <button class="map-tab active" data-floor="all">All Floors</button>
+      <button class="map-tab" data-floor="1">1st Floor</button>
+      <button class="map-tab" data-floor="2">2nd Floor</button>
+    </div>
+    <div class="hotel-map" id="hotelMap">
+      <!-- First Floor - Beach Front -->
+      <div class="map-floor" data-floor="1">
+        <div class="floor-label">First Floor - Beach Front</div>
+        <div class="floor-layout">
+          <!-- 100s Column (Left Side) -->
+          <div class="room-column">
+            <div class="room-column-label">100s Wing</div>
+            <div class="room-row">
+              <div class="room-cell" data-room="120"></div>
+              <div class="room-cell" data-room="110"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="119"></div>
+              <div class="room-cell" data-room="109"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="118"></div>
+              <div class="room-cell" data-room="108"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="117"></div>
+              <div class="room-cell" data-room="107"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="116"></div>
+              <div class="room-cell" data-room="106"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="115"></div>
+              <div class="room-cell" data-room="105"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="114"></div>
+              <div class="room-cell" data-room="104"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="113"></div>
+              <div class="room-cell" data-room="103"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="112"></div>
+              <div class="amenity-cell" style="height: 28px; min-width: 42px;">ICE</div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="111"></div>
+              <div class="amenity-cell" style="height: 28px; min-width: 42px;">DESK</div>
+            </div>
+          </div>
+
+          <!-- Center Amenities -->
+          <div class="map-center-amenities">
+            <div class="amenity-cell parking">PARKING<br>Beach Front</div>
+            <div class="amenity-cell pool">POOL</div>
+            <div class="amenity-cell">PATIO</div>
+            <div class="amenity-cell ev-charging">EV CHARGING<br>J-1772</div>
+          </div>
+
+          <!-- 300s Column (Right Side) -->
+          <div class="room-column">
+            <div class="room-column-label">300s Wing</div>
+            <div class="room-row">
+              <div class="room-cell" data-room="322"></div>
+              <div class="room-cell" data-room="311"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="321"></div>
+              <div class="room-cell" data-room="310"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="320"></div>
+              <div class="room-cell" data-room="309"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="319"></div>
+              <div class="room-cell" data-room="308"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="318"></div>
+              <div class="room-cell" data-room="307"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="317"></div>
+              <div class="room-cell" data-room="306"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="316"></div>
+              <div class="room-cell" data-room="305"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="315"></div>
+              <div class="room-cell" data-room="304"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="314"></div>
+              <div class="room-cell" data-room="303"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="313"></div>
+              <div class="room-cell" data-room="302"></div>
+            </div>
+            <div class="room-row">
+              <div class="amenity-cell" style="height: 28px; min-width: 42px;">BNQT</div>
+              <div class="room-cell" data-room="301"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Second Floor -->
+      <div class="map-floor" data-floor="2">
+        <div class="floor-label">Second Floor</div>
+        <div class="floor-layout">
+          <!-- 200s Column (Left Side) -->
+          <div class="room-column">
+            <div class="room-column-label">200s Wing</div>
+            <div class="room-row">
+              <div class="room-cell" data-room="224"></div>
+              <div class="room-cell" data-room="212"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="223"></div>
+              <div class="room-cell" data-room="211"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="222"></div>
+              <div class="room-cell" data-room="210"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="221"></div>
+              <div class="room-cell" data-room="209"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="220"></div>
+              <div class="room-cell" data-room="208"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="219"></div>
+              <div class="room-cell" data-room="207"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="218"></div>
+              <div class="room-cell" data-room="206"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="217"></div>
+              <div class="room-cell" data-room="205"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="216"></div>
+              <div class="room-cell" data-room="204"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="215"></div>
+              <div class="room-cell" data-room="203"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="214"></div>
+              <div class="room-cell" data-room="202"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="213"></div>
+              <div class="room-cell" data-room="201"></div>
+            </div>
+          </div>
+
+          <!-- Center - Top Floor Rooms -->
+          <div class="map-center-amenities">
+            <div class="room-column">
+              <div class="room-column-label">Top Floor</div>
+              <div class="room-row">
+                <div class="room-cell" data-room="501"></div>
+                <div class="room-cell" data-room="502"></div>
+              </div>
+            </div>
+            <div class="amenity-cell parking" style="margin-top: 1rem;">PARKING<br>Second Floor</div>
+          </div>
+
+          <!-- 400s Column (Right Side) -->
+          <div class="room-column">
+            <div class="room-column-label">400s Wing</div>
+            <div class="room-row">
+              <div class="room-cell" data-room="422"></div>
+              <div class="room-cell" data-room="411"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="421"></div>
+              <div class="room-cell" data-room="410"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="420"></div>
+              <div class="room-cell" data-room="409"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="419"></div>
+              <div class="room-cell" data-room="408"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="418"></div>
+              <div class="room-cell" data-room="407"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="417"></div>
+              <div class="room-cell" data-room="406"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="416"></div>
+              <div class="room-cell" data-room="405"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="415"></div>
+              <div class="room-cell" data-room="404"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="414"></div>
+              <div class="room-cell" data-room="403"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="413"></div>
+              <div class="room-cell" data-room="402"></div>
+            </div>
+            <div class="room-row">
+              <div class="room-cell" data-room="412"></div>
+              <div class="room-cell" data-room="401"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 </div>
 
 <div class="dashboard-filters">
@@ -91,7 +356,8 @@
 <script>
   const SESSION_ID = "{{ session.session_id }}";
   const HAS_DEPARTURES = {{ 'true' if session.has_departures else 'false' }};
-  initDashboard(SESSION_ID, HAS_DEPARTURES);
+  const SCOPE = "{{ session.scope }}";
+  initDashboard(SESSION_ID, HAS_DEPARTURES, SCOPE);
 </script>
 {% endif %}
 {% endblock %}

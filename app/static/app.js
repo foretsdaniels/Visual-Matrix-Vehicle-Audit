@@ -54,10 +54,16 @@ let _dashboardData = [];
 let _sortCol = 'room_number';
 let _sortDir = 'asc';
 let _pollTimer = null;
+let _currentScope = 'full';
 
-function initDashboard(sessionId, hasDepartures) {
+function initDashboard(sessionId, hasDepartures, scope) {
+  _currentScope = scope || 'full';
   fetchAndRender(sessionId, hasDepartures);
   _pollTimer = setInterval(() => fetchAndRender(sessionId, hasDepartures), 5000);
+  
+  // Initialize map features
+  initMapTabs();
+  initMapRoomClick();
 
   // Search
   const search = document.getElementById('searchInput');
@@ -104,8 +110,10 @@ function fetchAndRender(sessionId, hasDepartures) {
     .then(r => r.json())
     .then(data => {
       _dashboardData = data.records || [];
+      _currentScope = data.session.scope || 'full';
       updateTiles(data.session);
       renderTable(hasDepartures);
+      updateHotelMap(hasDepartures, _currentScope);
       const lu = document.getElementById('lastUpdated');
       if (lu) lu.textContent = 'Updated ' + new Date().toLocaleTimeString();
     })
@@ -226,4 +234,154 @@ function esc(str) {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+/* ============================================================
+   Hotel Map Visualization
+   ============================================================ */
+
+function updateHotelMap(hasDepartures, scope) {
+  const roomCells = document.querySelectorAll('.room-cell[data-room]');
+  if (!roomCells.length) return;
+
+  // Build room data lookup
+  const roomData = {};
+  _dashboardData.forEach(rec => {
+    const rn = rec.room_number;
+    if (!roomData[rn]) {
+      roomData[rn] = {
+        room_number: rn,
+        status: rec.vehicle_status,
+        hasVehicle: false,
+        vehicles: []
+      };
+    }
+    if (rec.has_vehicle_info) {
+      roomData[rn].hasVehicle = true;
+      roomData[rn].vehicles.push({
+        plate: rec.plate,
+        state: rec.state,
+        make_model: rec.make_model,
+        year: rec.year
+      });
+    }
+  });
+
+  // Determine which rooms are in scope
+  const inScope = (roomNum) => {
+    if (scope === 'full') return true;
+    if (roomNum === 501 || roomNum === 502) return true;
+    if (scope === '100_200') return roomNum >= 100 && roomNum <= 299;
+    if (scope === '300_400') return roomNum >= 300 && roomNum <= 499;
+    return true;
+  };
+
+  roomCells.forEach(cell => {
+    const roomNum = parseInt(cell.dataset.room, 10);
+    const data = roomData[roomNum];
+    
+    // Clear existing classes
+    cell.classList.remove('has-vehicle', 'not-in-system', 'due-out', 'stayover-vehicle', 'empty-room', 'not-in-scope');
+    
+    // Remove existing tooltip
+    const existingTooltip = cell.querySelector('.room-tooltip');
+    if (existingTooltip) existingTooltip.remove();
+
+    // Check if in scope
+    if (!inScope(roomNum)) {
+      cell.classList.add('not-in-scope');
+      cell.textContent = roomNum;
+      return;
+    }
+
+    // If no data for this room, it's empty/not occupied
+    if (!data) {
+      cell.classList.add('empty-room');
+      cell.textContent = roomNum;
+      return;
+    }
+
+    // Determine styling based on status
+    if (hasDepartures && data.status === 'DUE_OUT') {
+      cell.classList.add('due-out');
+    } else if (data.hasVehicle) {
+      cell.classList.add('has-vehicle');
+    } else {
+      cell.classList.add('not-in-system');
+    }
+
+    cell.textContent = roomNum;
+
+    // Build tooltip content
+    let tooltipHtml = `<div class="tooltip-room">Room ${roomNum}</div>`;
+    
+    if (hasDepartures) {
+      const statusText = data.status === 'DUE_OUT' ? 'Due Out' : 'Stayover';
+      tooltipHtml += `<div class="tooltip-status">${statusText}</div>`;
+    }
+
+    if (data.hasVehicle && data.vehicles.length > 0) {
+      data.vehicles.forEach(v => {
+        const parts = [];
+        if (v.state || v.plate) parts.push([v.state, v.plate].filter(Boolean).join(' '));
+        if (v.make_model) parts.push(v.make_model);
+        if (v.year) parts.push(v.year);
+        if (parts.length) {
+          tooltipHtml += `<div class="tooltip-vehicle">${esc(parts.join(' - '))}</div>`;
+        }
+      });
+    } else {
+      tooltipHtml += `<div class="tooltip-vehicle">Not In VM System</div>`;
+    }
+
+    const tooltip = document.createElement('div');
+    tooltip.className = 'room-tooltip';
+    tooltip.innerHTML = tooltipHtml;
+    cell.appendChild(tooltip);
+  });
+}
+
+function initMapTabs() {
+  const tabs = document.querySelectorAll('.map-tab');
+  const floors = document.querySelectorAll('.map-floor');
+  
+  if (!tabs.length || !floors.length) return;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const targetFloor = tab.dataset.floor;
+      
+      // Update active tab
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      
+      // Show/hide floors
+      floors.forEach(floor => {
+        if (targetFloor === 'all') {
+          floor.style.display = '';
+        } else {
+          floor.style.display = floor.dataset.floor === targetFloor ? '' : 'none';
+        }
+      });
+    });
+  });
+}
+
+// Add click handler to focus search on room
+function initMapRoomClick() {
+  document.querySelectorAll('.room-cell[data-room]').forEach(cell => {
+    cell.addEventListener('click', () => {
+      const roomNum = cell.dataset.room;
+      const searchInput = document.getElementById('searchInput');
+      if (searchInput && !cell.classList.contains('not-in-scope')) {
+        searchInput.value = roomNum;
+        searchInput.dispatchEvent(new Event('input'));
+        // Scroll to table
+        const tableWrapper = document.querySelector('.table-wrapper');
+        if (tableWrapper) {
+          tableWrapper.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
+    });
+  });
 }
